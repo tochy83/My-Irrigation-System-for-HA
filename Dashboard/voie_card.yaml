@@ -251,7 +251,7 @@ cards:
           uix:
             style: |
               ha-card {
-                margin-top: -17px;
+                margin-top: -10px;
                 padding-bottom: 4px;
                 padding-left: 8px;
                 padding-right: 8px;
@@ -365,7 +365,7 @@ cards:
           uix:
             style: |
               ha-card {
-                margin-top: -17px;
+                margin-top: -10px;
                 padding-bottom: 4px;
                 padding-left: 8px;
                 padding-right: 8px;
