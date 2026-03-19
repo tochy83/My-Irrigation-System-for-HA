@@ -181,7 +181,7 @@ script:
           - conditions:
               - alias: "La voie est hors ligne, n'était pas sélectionnée et hors update_label"
                 condition: template
-                value_template: "{{ voie_déconnectée and not update_label and last_state_off }}"
+                value_template: "{{ voie_deconnectee and not update_label and last_state_off }}"
             sequence:
               - alias: "Afficher la notification temporaire du dashboard"
                 action: script.misha_arrosage_notifications_temporaires
