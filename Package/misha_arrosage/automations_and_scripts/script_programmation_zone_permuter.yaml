@@ -68,3 +68,11 @@ script:
                 data:
                   notifs: "programmation_no_evenements_zone_{{ zone_id }}"
                   duree: "3"
+
+        default:
+          - alias: "Afficher la notification temporaire du dashboard"
+            action: script.misha_arrosage_notifications_temporaires
+            data:
+              notifs: "programmation_on_zone_{{ zone_id }}"
+              duree: "3"
+      

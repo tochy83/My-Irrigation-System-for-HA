@@ -22,11 +22,27 @@ automation:
       - alias: Mise à jour du compteur d'entités orphelines
         action: input_number.set_value
         data:
-          value: |-
-            {{ states 
-              | selectattr('entity_id', 'search', 'misha_arrosage_') 
-              | selectattr('state', 'eq', 'unavailable') 
-              | list | count }}
+#          value: |-
+#            {{ states 
+#              | selectattr('entity_id', 'search', 'misha_arrosage_') 
+#              | selectattr('state', 'eq', 'unavailable') 
+#              | list | count }}
+
+          value: >
+            {% set data = state_attr('sensor.misha_arrosage_data_voies', 'data_voies') | from_json %}
+            {% set voies_valides = data.values() | map(attribute='voie_id') | map('string') | list %}
+            {% set entites_unavailable = states 
+               | selectattr('entity_id', 'search', 'misha_arrosage_')
+               | selectattr('state', 'eq', 'unavailable')
+               | map(attribute='entity_id') | list %}
+            {% set ns = namespace(orphelines=[]) %}
+            {% for entite in entites_unavailable %}
+              {% set id = entite.split('_') | last %}
+              {% if not ('electrovanne_' in entite and id in voies_valides) %}
+                {% set ns.orphelines = ns.orphelines + [entite] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.orphelines | count }}
         target:
           entity_id: input_number.misha_arrosage_nb_entites_orphelines
     mode: restart

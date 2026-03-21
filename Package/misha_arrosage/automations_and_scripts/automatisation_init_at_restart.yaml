@@ -159,19 +159,57 @@ automation:
         target:
           entity_id: input_boolean.misha_arrosage_restart_needed
 
-      - variables: # Liste des entités orphelines
-          entités_orphelines: >
-            {{ states 
-              | selectattr('entity_id', 'search', 'misha_arrosage_')
-              | selectattr('state', 'eq', 'unavailable')
-              | map(attribute='entity_id')
-              | list }}
+#      - variables: # Liste des entités orphelines
+#          entites_orphelines: >
+#            {{ states 
+#              | selectattr('entity_id', 'search', 'misha_arrosage_')
+#              | selectattr('state', 'eq', 'unavailable')
+#              | map(attribute='entity_id')
+#              | list }}
+
+#      - variables: # Liste des entités réellement orphelines (exclut les voies présentes dans data_voies_JSON)
+#          data_voies: "{{ state_attr('sensor.misha_arrosage_data_voies', 'data_voies') | from_json }}"
+#          voies_valides: "{{ data_voies.values() | map(attribute='voie_id') | map('string') | list }}"
+#          entites_orphelines: >
+#            {% set entites_unavailable = states 
+#               | selectattr('entity_id', 'search', 'misha_arrosage_')
+#               | selectattr('state', 'eq', 'unavailable')
+#               | map(attribute='entity_id') | list %}
+#            {% set ns = namespace(orphelines=[]) %}
+#            {% for entite in entites_unavailable %}
+#              {% set voie_id = entite.split('_') | last %}
+#              {# On ajoute à la liste uniquement si la voie n'est pas dans data_voies_JSON #}
+#              {% if voie_id not in voies_valides %}
+#                {% set ns.orphelines = ns.orphelines + [entite] %}
+#              {% endif %}
+#            {% endfor %}
+#            {{ ns.orphelines }}
+
+      - variables: # Liste des entités réellement orphelines
+          data_voies: "{{ state_attr('sensor.misha_arrosage_data_voies', 'data_voies') | from_json }}"
+          voies_valides: "{{ data_voies.values() | map(attribute='voie_id') | map('string') | list }}"
+          entites_orphelines: >
+            {% set entites_unavailable = states 
+               | selectattr('entity_id', 'search', 'misha_arrosage_')
+               | selectattr('state', 'eq', 'unavailable')
+               | map(attribute='entity_id') | list %}
+            {% set ns = namespace(orphelines=[]) %}
+            {% for entite in entites_unavailable %}
+              {% set id = entite.split('_') | last %}
+              {% if 'electrovanne_' in entite and id in voies_valides %}
+                {# On ignore switch.misha_arrosage_electrovanne_x si x est encore dans data_voies_JSON #}
+              {% else %}
+                {# Tout le reste est forcement une entité orpheline #}
+                {% set ns.orphelines = ns.orphelines + [entite] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.orphelines }}
 
       - alias: "Mise à jour du nombre d'entités orphelines en cas de suppression de voies ou de zones"
         action: input_number.set_value
         metadata: {}
         data:
-          value: "{{ entités_orphelines | count }}"
+          value: "{{ entites_orphelines | count }}"
         target:
           entity_id: input_number.misha_arrosage_nb_entites_orphelines
 
@@ -187,6 +225,6 @@ automation:
                 metadata: {}
                 data:
                   keep_days: 0
-                  entity_id: "{{ entités_orphelines }}"
+                  entity_id: "{{ entites_orphelines }}"
 
     mode: single
